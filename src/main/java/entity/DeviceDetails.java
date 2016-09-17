@@ -1,18 +1,23 @@
 package entity;
 
+import org.redisson.api.annotation.REntity;
+import org.redisson.api.annotation.RId;
+
+@REntity
 public class DeviceDetails {
 
-    private String id;
+    @RId
+    private String udid;
     private int port;
     private String status;
     private String belongsTo;
 
-    public String getId() {
-        return id;
+    public String getUdid() {
+        return udid;
     }
 
-    public void setId(String id) {
-        this.id = id;
+    public void setUdid(String udid) {
+        this.udid = udid;
     }
 
     public int getPort() {

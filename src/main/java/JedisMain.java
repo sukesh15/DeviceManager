@@ -1,14 +1,13 @@
+import helpers.DeviceHelper;
 import register.DeviceRegistrar;
-
-import java.sql.Array;
-import java.util.Arrays;
 
 public class JedisMain {
 
 
     public static void main(String[] args) {
-        new DeviceRegistrar().setUpDevices(args);
-//        new DeviceRegistrar().setUpDevices(new String[]{"emulator","interApp"});
+        new DeviceRegistrar(args).setUpDevices(new DeviceHelper(args[0]).getDevices());
+//        new DeviceRegistrar().setUpDevices(new String[]{"emulator", "single"});
+
     }
 
 }

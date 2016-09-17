@@ -23,13 +23,28 @@ public class RedisReader {
     }
 
     public List<DeviceDetails> getDevicesForTestRun() {
-        RList<DeviceDetails> check = redisson.getList("deviceList");
-        List<DeviceDetails> deviceDetailsList = new ArrayList<>();
-
-        for (DeviceDetails deviceDetails : check) {
-            deviceDetailsList.add(deviceDetails);
+        try {
+            RList<DeviceDetails> deviceRList = redisson.getList("deviceList");
+            List<DeviceDetails> deviceList = convertRListToStandardJavaList(deviceRList);
+            redisson.shutdown();
+            return deviceList;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
-        return deviceDetailsList;
+//        List<DeviceDetails> deviceDetailsList = new ArrayList<>();
+//
+//        for (DeviceDetails deviceDetails : check) {
+//            deviceDetailsList.add(deviceDetails);
+//        }
+//        return deviceDetailsList;
+    }
+
+    private List<DeviceDetails> convertRListToStandardJavaList(RList<DeviceDetails> rList) {
+        List<DeviceDetails> standardJavaList = new ArrayList<>();
+        for (DeviceDetails deviceDetails : rList) {
+            standardJavaList.add(deviceDetails);
+        }
+        return standardJavaList;
     }
 
     public List<DeviceDetails> getDriverDevicesForTestRun() {
