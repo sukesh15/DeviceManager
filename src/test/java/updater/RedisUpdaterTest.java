@@ -9,6 +9,8 @@ import reader.RedisReader;
 import register.DeviceRegistrar;
 
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.when;
@@ -28,28 +30,44 @@ public class RedisUpdaterTest {
     }
 
 
-    private void sortList(List<DeviceDetails> devicesForTestRun) {
-        Comparator<DeviceDetails> comparator = (c1, c2) -> Integer.parseInt(c2.getUdid()) - Integer.parseInt(c1.getUdid());
-        Collections.sort(devicesForTestRun, comparator);
-    }
-
     @Test
-    public void shouldBeAbleToUpdateStatusOfDevices() throws Exception {
+    public void shouldBeAbleToUpdateDevicesFromDifferentThreads() throws InterruptedException {
+
+        ExecutorService executor = Executors.newFixedThreadPool(2);
+        for (int iterator = 0; iterator < 2; iterator++) {
+            Runnable worker = new DeviceThread();
+            executor.execute(worker);
+        }
+
+        executor.shutdown();
+        // Wait until all threads are finish
+        while (!executor.isTerminated()) {
+
+        }
+        System.out.println("\nFinished all threads");
         List<DeviceDetails> devicesForTestRun = new RedisReader().getDevicesForTestRun();
-        sortList(devicesForTestRun);
+        for (DeviceDetails deviceDetails : devicesForTestRun) {
+            assertEquals("Engaged",deviceDetails.getStatus());
+        }
 
-        new RedisUpdater().updateStatusToEngagedForDevice(devicesForTestRun.get(0));
-        List<DeviceDetails> updatedDeviceList = new RedisReader().getDevicesForTestRun();
-
-        sortList(updatedDeviceList);
-        assertEquals("Engaged", updatedDeviceList.get(0).getStatus());
-
-        new RedisUpdater().updateStatusToAvailableForDevice(updatedDeviceList.get(0));
-        List<DeviceDetails> updatedDeviceList1 = new RedisReader().getDevicesForTestRun();
-
-        sortList(updatedDeviceList1);
-        assertEquals("Available", updatedDeviceList1.get(0).getStatus());
-
+        DeviceDetails deviceToBeUpdated = devicesForTestRun.get(0);
+        new RedisUpdater().updateStatusToAvailableForDevice(deviceToBeUpdated);
+        assertEquals("Available", deviceToBeUpdated.getStatus());
     }
 
+
+    private class DeviceThread implements Runnable {
+
+
+        public DeviceThread() {
+        }
+
+        @Override
+        public void run() {
+            System.out.println("inside thread run");
+            DeviceDetails engagedDevice = new RedisUpdater().getFirstAvailableDeviceAndUpdateToEngaged();
+            System.out.println("status updated for device -- " + engagedDevice.getUdid());
+        }
+
+    }
 }

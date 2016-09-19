@@ -3,11 +3,14 @@ package reader;
 import entity.DeviceDetails;
 import org.redisson.Redisson;
 import org.redisson.api.RList;
+import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import updater.RedisUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class RedisReader {
 
@@ -23,39 +26,37 @@ public class RedisReader {
     }
 
     public List<DeviceDetails> getDevicesForTestRun() {
+        RLock lock = redisson.getLock("readLock");
+        lock.lock(5, TimeUnit.SECONDS);
         try {
             RList<DeviceDetails> deviceRList = redisson.getList("deviceList");
-            List<DeviceDetails> deviceList = convertRListToStandardJavaList(deviceRList);
-            redisson.shutdown();
+            List<DeviceDetails> deviceList = deviceRList.readAll();
             return deviceList;
         } catch (Exception e) {
             throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
+            redisson.shutdown();
         }
-//        List<DeviceDetails> deviceDetailsList = new ArrayList<>();
-//
-//        for (DeviceDetails deviceDetails : check) {
-//            deviceDetailsList.add(deviceDetails);
-//        }
-//        return deviceDetailsList;
-    }
-
-    private List<DeviceDetails> convertRListToStandardJavaList(RList<DeviceDetails> rList) {
-        List<DeviceDetails> standardJavaList = new ArrayList<>();
-        for (DeviceDetails deviceDetails : rList) {
-            standardJavaList.add(deviceDetails);
-        }
-        return standardJavaList;
     }
 
     public List<DeviceDetails> getDriverDevicesForTestRun() {
-        RList<DeviceDetails> check = redisson.getList("deviceList");
-        List<DeviceDetails> deviceDetailsList = new ArrayList<>();
+        try {
+            List<DeviceDetails> devicesForTestRun = getDevicesForTestRun();
+            List<DeviceDetails> driverDevices = new ArrayList<>();
 
-        for (DeviceDetails deviceDetails : check) {
-            if (deviceDetails.getBelongsTo().equalsIgnoreCase("Driver"))
-                deviceDetailsList.add(deviceDetails);
+            for (DeviceDetails deviceDetails : devicesForTestRun) {
+                if (deviceDetails.getBelongsTo().equalsIgnoreCase("Driver"))
+                    driverDevices.add(deviceDetails);
+            }
+            return driverDevices;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            redisson.shutdown();
         }
-        return deviceDetailsList;
+
+
     }
 
     public List<DeviceDetails> getRiderDevicesForTestRun() {
@@ -68,6 +69,7 @@ public class RedisReader {
         }
         return deviceDetailsList;
     }
+
 
 
 }

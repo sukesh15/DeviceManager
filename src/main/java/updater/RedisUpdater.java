@@ -3,8 +3,12 @@ package updater;
 import entity.DeviceDetails;
 import org.redisson.Redisson;
 import org.redisson.api.RList;
+import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class RedisUpdater {
 
@@ -18,7 +22,33 @@ public class RedisUpdater {
         redisson = Redisson.create(config);
     }
 
-    public void updateStatusToEngagedForDevice(DeviceDetails deviceToBeUpdated) {
+    public DeviceDetails getFirstAvailableDeviceAndUpdateToEngaged() {
+        RLock lock = redisson.getLock("myLock");
+        lock.lock(5, TimeUnit.SECONDS);
+        try {
+            RList<DeviceDetails> check = redisson.getList("deviceList");
+            List<DeviceDetails> readAll = check.readAll();
+
+            for (DeviceDetails deviceDetails : readAll) {
+                if (deviceDetails.getStatus().equalsIgnoreCase("Available")) {
+                    updateStatusToEngagedForDevice(deviceDetails);
+                    return deviceDetails;
+                }
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
+            redisson.shutdown();
+        }
+
+        throw new RuntimeException("No Device Available");
+    }
+
+    private void updateStatusToEngagedForDevice(DeviceDetails deviceToBeUpdated) {
+        RLock lock = redisson.getLock("writeLock");
+        lock.lock(5, TimeUnit.SECONDS);
         try {
             RList<DeviceDetails> deviceList = redisson.getList("deviceList");
             removeDeviceFromRedisList(deviceToBeUpdated, deviceList);
@@ -27,6 +57,7 @@ public class RedisUpdater {
         } catch (Exception e) {
             throw new RuntimeException("Device status not updated correctly");
         } finally {
+            lock.unlock();
             redisson.shutdown();
         }
     }

@@ -2,6 +2,7 @@ package register;
 
 import entity.DeviceDetails;
 import helpers.DeviceHelper;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import reader.RedisReader;
@@ -14,12 +15,17 @@ import static org.mockito.Mockito.when;
 
 public class DeviceRegistrarTest {
 
-    @Test
-    public void setUpDevicesForSingleAppTests() throws Exception {
-        DeviceHelper deviceHelper = Mockito.mock(DeviceHelper.class);
+    private DeviceHelper deviceHelper;
+
+    @Before
+    public void setUp() {
+        deviceHelper = Mockito.mock(DeviceHelper.class);
         List<String> deviceList1 = Arrays.asList("101", "102");
         when(deviceHelper.getDevices()).thenReturn(deviceList1);
+    }
 
+    @Test
+    public void setUpDevicesForSingleAppTests() throws Exception {
         final String[] args = new String[]{"emulator", "single"};
         final DeviceRegistrar deviceRegistrar = new DeviceRegistrar(args);
         deviceRegistrar.setUpDevices(deviceHelper.getDevices());
@@ -29,10 +35,6 @@ public class DeviceRegistrarTest {
 
     @Test
     public void setUpDevicesForInterAppTests() throws Exception {
-        DeviceHelper deviceHelper = Mockito.mock(DeviceHelper.class);
-        List<String> deviceList1 = Arrays.asList("101", "102");
-        when(deviceHelper.getDevices()).thenReturn(deviceList1);
-
         final String[] args = new String[]{"emulator", "interApp"};
         final DeviceRegistrar deviceRegistrar = new DeviceRegistrar(args);
         deviceRegistrar.setUpDevices(deviceHelper.getDevices());
