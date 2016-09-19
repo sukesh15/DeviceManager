@@ -23,15 +23,44 @@ public class RedisUpdaterTest {
         deviceHelper = Mockito.mock(DeviceHelper.class);
         List<String> deviceList1 = Arrays.asList("101", "102");
         when(deviceHelper.getDevices()).thenReturn(deviceList1);
+    }
+
+    @Test
+    public void shouldBeAbleToUpdateDriverDevicesWhenRunningInterApp(){
+
+        final String[] args = new String[]{"emulator", "interApp"};
+        final DeviceRegistrar deviceRegistrar = new DeviceRegistrar(args);
+        deviceRegistrar.setUpDevices(deviceHelper.getDevices());
+
+        DeviceDetails updatedDevice = new RedisUpdater().getFirstAvailableDriverDeviceAndUpdateToEngaged();
+
+        assertEquals("Engaged",updatedDevice.getStatus());
+        new RedisUpdater().updateStatusToAvailableForDevice(updatedDevice);
+        assertEquals("Available",updatedDevice.getStatus());
+
+    }
+
+    @Test
+    public void shouldBeAbleToUpdateRiderDevicesWhenRunningInterApp(){
+
+        final String[] args = new String[]{"emulator", "interApp"};
+        final DeviceRegistrar deviceRegistrar = new DeviceRegistrar(args);
+        deviceRegistrar.setUpDevices(deviceHelper.getDevices());
+
+        DeviceDetails updatedDevice = new RedisUpdater().getFirstAvailableRiderDeviceAndUpdateToEngaged();
+
+        assertEquals("Engaged",updatedDevice.getStatus());
+        new RedisUpdater().updateStatusToAvailableForDevice(updatedDevice);
+        assertEquals("Available",updatedDevice.getStatus());
+
+    }
+
+    @Test
+    public void shouldBeAbleToUpdateDevicesFromDifferentThreads() throws InterruptedException {
 
         final String[] args = new String[]{"emulator", "singleApp"};
         final DeviceRegistrar deviceRegistrar = new DeviceRegistrar(args);
         deviceRegistrar.setUpDevices(deviceHelper.getDevices());
-    }
-
-
-    @Test
-    public void shouldBeAbleToUpdateDevicesFromDifferentThreads() throws InterruptedException {
 
         ExecutorService executor = Executors.newFixedThreadPool(2);
         for (int iterator = 0; iterator < 2; iterator++) {

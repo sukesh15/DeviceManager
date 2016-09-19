@@ -6,6 +6,7 @@ import org.redisson.api.RList;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import reader.RedisReader;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -23,19 +24,20 @@ public class RedisUpdater {
     }
 
     public DeviceDetails getFirstAvailableDeviceAndUpdateToEngaged() {
-        RLock lock = redisson.getLock("myLock");
+        RLock lock = redisson.getLock("writeLock");
         lock.lock(5, TimeUnit.SECONDS);
         try {
-            RList<DeviceDetails> check = redisson.getList("deviceList");
-            List<DeviceDetails> readAll = check.readAll();
+            RList<DeviceDetails> deviceRList = redisson.getList("deviceList");
+            List<DeviceDetails> readAll = deviceRList.readAll();
 
             for (DeviceDetails deviceDetails : readAll) {
                 if (deviceDetails.getStatus().equalsIgnoreCase("Available")) {
-                    updateStatusToEngagedForDevice(deviceDetails);
+                    removeDeviceFromRedisList(deviceDetails, deviceRList);
+                    deviceDetails.setStatus("Engaged");
+                    deviceRList.add(deviceDetails);
                     return deviceDetails;
                 }
             }
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
@@ -46,9 +48,57 @@ public class RedisUpdater {
         throw new RuntimeException("No Device Available");
     }
 
-    private void updateStatusToEngagedForDevice(DeviceDetails deviceToBeUpdated) {
+    public DeviceDetails getFirstAvailableDriverDeviceAndUpdateToEngaged() {
         RLock lock = redisson.getLock("writeLock");
         lock.lock(5, TimeUnit.SECONDS);
+        try {
+            RList<DeviceDetails> deviceRList = redisson.getList("deviceList");
+            List<DeviceDetails> readAll = deviceRList.readAll();
+
+            for (DeviceDetails deviceDetails : readAll) {
+                if (deviceDetails.getStatus().equalsIgnoreCase("Available") &&
+                        deviceDetails.getBelongsTo().equals("Driver")) {
+                    removeDeviceFromRedisList(deviceDetails, deviceRList);
+                    deviceDetails.setStatus("Engaged");
+                    deviceRList.add(deviceDetails);
+                    return deviceDetails;
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
+            redisson.shutdown();
+        }
+        throw new RuntimeException("No Driver Device Avalable");
+    }
+
+    public DeviceDetails getFirstAvailableRiderDeviceAndUpdateToEngaged() {
+        RLock lock = redisson.getLock("writeLock");
+        lock.lock(5, TimeUnit.SECONDS);
+        try {
+            RList<DeviceDetails> deviceRList = redisson.getList("deviceList");
+            List<DeviceDetails> readAll = deviceRList.readAll();
+
+            for (DeviceDetails deviceDetails : readAll) {
+                if (deviceDetails.getStatus().equalsIgnoreCase("Available") &&
+                        deviceDetails.getBelongsTo().equals("Rider")) {
+                    removeDeviceFromRedisList(deviceDetails, deviceRList);
+                    deviceDetails.setStatus("Engaged");
+                    deviceRList.add(deviceDetails);
+                    return deviceDetails;
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        } finally {
+            lock.unlock();
+            redisson.shutdown();
+        }
+        throw new RuntimeException("No Rider Device Avalable");
+    }
+
+    private void updateStatusToEngagedForDevice(DeviceDetails deviceToBeUpdated) {
         try {
             RList<DeviceDetails> deviceList = redisson.getList("deviceList");
             removeDeviceFromRedisList(deviceToBeUpdated, deviceList);
@@ -57,7 +107,6 @@ public class RedisUpdater {
         } catch (Exception e) {
             throw new RuntimeException("Device status not updated correctly");
         } finally {
-            lock.unlock();
             redisson.shutdown();
         }
     }
