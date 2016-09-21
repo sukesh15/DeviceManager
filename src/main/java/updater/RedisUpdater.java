@@ -8,6 +8,8 @@ import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import reader.RedisReader;
 
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +31,7 @@ public class RedisUpdater {
         try {
             RList<DeviceDetails> deviceRList = redisson.getList("deviceList");
             List<DeviceDetails> readAll = deviceRList.readAll();
+            readAll.sort((a, b) -> Integer.compare(b.getPort(), a.getPort()));
 
             for (DeviceDetails deviceDetails : readAll) {
                 if (deviceDetails.getStatus().equalsIgnoreCase("Available")) {
@@ -96,19 +99,6 @@ public class RedisUpdater {
             redisson.shutdown();
         }
         throw new RuntimeException("No Rider Device Avalable");
-    }
-
-    private void updateStatusToEngagedForDevice(DeviceDetails deviceToBeUpdated) {
-        try {
-            RList<DeviceDetails> deviceList = redisson.getList("deviceList");
-            removeDeviceFromRedisList(deviceToBeUpdated, deviceList);
-            deviceToBeUpdated.setStatus("Engaged");
-            deviceList.add(deviceToBeUpdated);
-        } catch (Exception e) {
-            throw new RuntimeException("Device status not updated correctly");
-        } finally {
-            redisson.shutdown();
-        }
     }
 
     private void removeDeviceFromRedisList(DeviceDetails deviceToBeUpdated, RList<DeviceDetails> deviceList) {

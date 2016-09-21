@@ -36,7 +36,7 @@ public class DeviceRegistrar {
                 deviceObj.setUdid(device);
                 deviceObj.setPort(port);
                 deviceObj.setStatus("Available");
-                deviceObj.setBelongsTo("Rider");
+                deviceObj.setBelongsTo("NA");
                 deviceDetailsList.add(deviceObj);
 
                 port = port + 20;
