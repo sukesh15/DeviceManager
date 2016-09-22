@@ -29,11 +29,11 @@ public class DeviceHelper {
 
     public List<String> attachedDevicesAndEmulators() {
         List<String> devices = new ArrayList<>();
-        Scanner scan = new Scanner(String.valueOf(readAdbLog("adb devices")));
+        Scanner scan = new Scanner(String.valueOf(readAttachedDevices()));
         while (scan.hasNextLine()) {
             String oneLine = scan.nextLine();
-            if (oneLine.endsWith("device")) {
-                devices.add(oneLine.replace("device", "").trim());
+            if (oneLine.contains("model")) {
+                devices.add(oneLine.split("device")[0].trim());
             }
         }
         return devices;
@@ -41,23 +41,27 @@ public class DeviceHelper {
 
     public List<String> attachedDevices() {
         List<String> devices = new ArrayList<>();
-        Scanner scan = new Scanner(String.valueOf(readAdbLog("adb devices")));
+        Scanner scan = new Scanner(String.valueOf(readAttachedDevices()));
         while (scan.hasNextLine()) {
             String oneLine = scan.nextLine();
-            if (oneLine.endsWith("device") && !oneLine.contains(".")) {
-                devices.add(oneLine.replace("device", "").trim());
+            if (oneLine.contains("model") && !oneLine.contains("vbox")) {
+                devices.add(oneLine.split("device")[0].trim());
             }
         }
         return devices;
     }
 
+    public StringBuilder readAttachedDevices() {
+        return readAdbLog("adb devices -l");
+    }
+
     public List<String> attachedEmulators() {
         List<String> devices = new ArrayList<>();
-        Scanner scan = new Scanner(String.valueOf(readAdbLog("adb devices")));
+        Scanner scan = new Scanner(String.valueOf(readAttachedDevices()));
         while (scan.hasNextLine()) {
             String oneLine = scan.nextLine();
-            if (oneLine.endsWith("device") && oneLine.contains(".")) {
-                devices.add(oneLine.replace("device", "").trim());
+            if (oneLine.contains("model") && oneLine.contains("vbox")) {
+                devices.add(oneLine.split("device")[0].trim());
             }
         }
         return devices;
