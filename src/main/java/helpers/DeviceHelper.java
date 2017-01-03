@@ -67,6 +67,18 @@ public class DeviceHelper {
         return devices;
     }
 
+    public String getDeviceAPILevel(String device) {
+        return readAdbLog("adb -s " + device + " shell getprop ro.build.version.sdk").toString();
+    }
+
+    public String getDeviceAndroidVersion(String device) {
+        return readAdbLog("adb -s " + device + " shell getprop ro.build.version.release").toString();
+    }
+
+    public String getDeviceModel(String device) {
+        return readAdbLog("adb -s " + device + " shell getprop ro.product.model").toString();
+    }
+
     public StringBuilder readAdbLog(String cmd) {
         String command = cmd;
         String line;

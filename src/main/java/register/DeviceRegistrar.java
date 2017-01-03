@@ -1,6 +1,7 @@
 package register;
 
 import entity.DeviceDetails;
+import helpers.DeviceHelper;
 import org.redisson.Redisson;
 import org.redisson.api.RList;
 import org.redisson.api.RedissonClient;
@@ -37,6 +38,9 @@ public class DeviceRegistrar {
                 deviceObj.setPort(port);
                 deviceObj.setStatus("Available");
                 deviceObj.setBelongsTo("NA");
+                deviceObj.setAPILevel(new DeviceHelper("any").getDeviceAPILevel(device));
+                deviceObj.setAndroidVersion(new DeviceHelper("any").getDeviceAndroidVersion(device));
+                deviceObj.setModel(new DeviceHelper("any").getDeviceModel(device));
                 deviceDetailsList.add(deviceObj);
 
                 port = port + 20;
@@ -69,6 +73,9 @@ public class DeviceRegistrar {
                     deviceObj.setBelongsTo("Driver");
                 else
                     deviceObj.setBelongsTo("Rider");
+                deviceObj.setAPILevel(new DeviceHelper("any").getDeviceAPILevel(device));
+                deviceObj.setAndroidVersion(new DeviceHelper("any").getDeviceAndroidVersion(device));
+                deviceObj.setModel(new DeviceHelper("any").getDeviceModel(device));
                 deviceDetailsList.add(deviceObj);
 
                 port = port + 20;
