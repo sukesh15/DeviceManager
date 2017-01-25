@@ -68,15 +68,15 @@ public class DeviceHelper {
     }
 
     public String getDeviceAPILevel(String device) {
-        return readAdbLog("adb -s " + device + " shell getprop ro.build.version.sdk").toString();
+        return readAdbLog("adb -s " + device + " shell getprop ro.build.version.sdk").toString().replace("\n", "");
     }
 
     public String getDeviceAndroidVersion(String device) {
-        return readAdbLog("adb -s " + device + " shell getprop ro.build.version.release").toString();
+        return readAdbLog("adb -s " + device + " shell getprop ro.build.version.release").toString().replace("\n", "");
     }
 
     public String getDeviceModel(String device) {
-        return readAdbLog("adb -s " + device + " shell getprop ro.product.model").toString();
+        return readAdbLog("adb -s " + device + " shell getprop ro.product.model").toString().replace("\n", "");
     }
 
     public StringBuilder readAdbLog(String cmd) {
